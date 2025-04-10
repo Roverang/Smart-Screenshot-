@@ -18,6 +18,6 @@ window = tk.Tk()
 window.title("Smart Screenshot Manager")
 window.geometry("600x400")
 
-tk.Button(window, text="Upload Screenshot", command=upload_screenshot).pack(pady=20)
+#tk.Button(window, text="Upload Screenshot", command=upload_screenshot).pack(pady=20)
 
 window.mainloop()
