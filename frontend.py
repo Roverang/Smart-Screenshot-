@@ -1,15 +1,17 @@
-import os,threading,keyboard,time
+import os, threading, keyboard, time
 from pystray import Icon, Menu, MenuItem
-from PIL import Image, ImageGrab
+from PIL import Image
 from plyer import notification
 
-BASE_DIR = os.path.join(os.getcwd(), "Screenshots")
+from backend import take_ss_and_save
+
+BASE_DIR = os.path.join(os.getcwd(), "Categorized_Screenshots")  # Match backend
 os.makedirs(BASE_DIR, exist_ok=True)
 
 def create_tray_icon():
     menu = Menu(
         MenuItem('Last Capture', show_last_capture),
-        MenuItem('Open Folder', open_folder),
+        MenuItem('Open Folder', lambda: os.startfile(BASE_DIR)),
         Menu.SEPARATOR,
         MenuItem('Exit', exit_app)
     )
@@ -19,22 +21,19 @@ def create_tray_icon():
     
 def show_last_capture(icon, item):
     try:
-        files = sorted(
-            [f for f in os.listdir(BASE_DIR) if f.endswith(".png")],
-            key=lambda x: os.path.getmtime(os.path.join(BASE_DIR, x)),
-            reverse=True
-        )
-        if files:
-            latest = os.path.join(BASE_DIR, files[0])
+        all_files = []
+        for root, _, files in os.walk(BASE_DIR):
+            for file in files:
+                if file.endswith(".png"):
+                    all_files.append(os.path.join(root, file))
+
+        if all_files:
+            latest = max(all_files, key=os.path.getmtime)
             os.startfile(latest)
         else:
             show_notification("No Screenshots", "No screenshots have been captured yet.")
     except Exception as e:
         show_notification("Error", str(e))
-
-
-def open_folder(icon, item):
-    os.startfile(BASE_DIR)
 
 def exit_app(icon, item):
     icon.stop()
@@ -48,28 +47,14 @@ def show_notification(title, message):
         timeout=5
     )
 
-def take_ss_and_save():
-    try:
-        screenshot = ImageGrab.grab()
-        timestamp = time.strftime("%Y%m%d_%H%M%S_%f")[:-3]
-        screenshot_path = os.path.join(BASE_DIR, f"screenshot_{timestamp}.png")
-        screenshot.save(screenshot_path)
-        show_notification("Screenshot Saved", 
-        f"📂 Folder: Screenshots\n📍 {screenshot_path}")
-    except Exception as e:
-        show_notification("Capture Failed", str(e))
-
 def listen_hotkey():
-    keyboard.add_hotkey("ctrl+shift+i", take_ss_and_save)
+    keyboard.add_hotkey("ctrl+shift+i", lambda: threading.Thread(target=take_ss_and_save).start())
     while True: 
         time.sleep(1)
 
 def start_app():
     threading.Thread(target=listen_hotkey, daemon=True).start()
-
     create_tray_icon()
 
 if __name__ == "__main__":
     start_app()
-
-

@@ -1,19 +1,13 @@
 import pytesseract
 from PIL import ImageGrab
-import keyboard
-import threading
-import os
-import time
-import psutil
+import os, time
 import win32gui
 
+# Path to your installed Tesseract executable
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 BASE_DIR = os.path.join(os.getcwd(), "Categorized_Screenshots")
 os.makedirs(BASE_DIR, exist_ok=True)
-
-def get_active_window_title():
-    return win32gui.GetWindowText(win32gui.GetForegroundWindow()).lower()
 
 CATEGORY_RULES = {
     "whatsapp": ["Messaging", "WhatsApp"],
@@ -45,6 +39,9 @@ CATEGORY_RULES = {
     "search": ["Browser", "Search"]
 }
 
+def get_active_window_title():
+    return win32gui.GetWindowText(win32gui.GetForegroundWindow()).lower()
+
 def categorize_window_title(title):
     for keyword, category in CATEGORY_RULES.items():
         if keyword in title:
@@ -67,7 +64,3 @@ def take_ss_and_save():
         log.write(f"{timestamp} | {window_title} | {category_path}\n")
 
     print(f"✅ Saved to: {screenshot_path}")
-
-keyboard.add_hotkey('ctrl+shift+i', lambda: threading.Thread(target=take_ss_and_save).start())
-print("🟢 Smart Screenshot Categorizer running... Press Ctrl+Shift+I to capture and save.")
-keyboard.wait()
